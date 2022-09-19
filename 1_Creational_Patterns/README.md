@@ -29,3 +29,47 @@
   * 단지 `shared_ptr`에 의해 관리되는 포인터를 간접적으로 참조
   * 실제 객체를 참조할 때는 `shared_ptr`로 변환해 사용
   * `shared_ptr`간의 순환 참조가 일어나는 것을 막기 위해 사용
+
+
+### 함수에서의 객체 리턴
+
+```c++
+struct Foo
+{
+    Foo(int n){}
+    Foo(const Foo&) {std::cout << "Copy Constructor !!\n";}
+};
+```
+
+#### 1.
+```c++
+Foo make_foo(int n)
+{
+    return Foo{n}
+}
+```
+- 위 방법은 가장 쉽지만, Foo 전체를 복제하는 오버헤드가 따름
+- 하지만 항상 그렇지는 않음(컴파일러에 따라)
+- 컴파일러는 `리턴값 최적화 기능`(Return Value Optimization, RVO)를 가지고 있기 때문
+
+#### 2.
+```c++
+unique_ptr<Foo> meke_foo(int n)
+{
+    return make_unique<Foo>(n);
+}
+```
+- 위 방법은 매우 안전함
+- 그러나 스마트 포인터를 강제하게 됨
+- 누군가는 `shared_ptr`을 사용하고 싶을 수 있음
+
+#### 3.
+```c++
+owner<Foo*> make_foo(int n)
+{
+    return Foo(n);
+}
+```
+- 원시 포인터를 리턴
+- 할당된 객체의 소멸을 강제하지 않으면서 객체를 정리할 책임이 호출자에게 있음을 명시 가능
+- 함수의 사용자에게 힌트를 제공하는것으로 볼 수 있음

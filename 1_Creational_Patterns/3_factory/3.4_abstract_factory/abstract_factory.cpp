@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include <memory>
+#include <map>
+
 
 struct HotDrink
 {
@@ -15,11 +17,11 @@ struct Tea : HotDrink
     }
 };
 
-struct Coffe : HotDrink
+struct Coffee : HotDrink
 {
     void prepare(int volume) override
     {
-        std::cout << "Take Coffe, boil water pour "<< volume << "ml, add some lemon" << std::endl;
+        std::cout << "Take coffee, boil water pour "<< volume << "ml" << std::endl;
     }
 };
 
@@ -34,13 +36,62 @@ std::unique_ptr<HotDrink> make_drink(std::string type)
     }
     else
     {
-        drink = std::make_unique<Coffe>();
+        drink = std::make_unique<Coffee>();
         drink->prepare(50);
     }
     return drink;
 }
 
+
+struct HotDrinkFactory
+{
+    virtual std::unique_ptr<HotDrink> make() const = 0;
+};
+
+struct CoffeeFactory : HotDrinkFactory
+{
+    std::unique_ptr<HotDrink> make() const override
+    {
+        return std::make_unique<Coffee>();
+    }
+};
+
+struct TeaFactory : HotDrinkFactory
+{
+    std::unique_ptr<HotDrink> make() const override
+    {
+        return std::make_unique<Tea>();
+    }
+};
+
+class DrinkFactory
+{
+    std::map<std::string, std::unique_ptr<HotDrinkFactory>> hot_factories;
+
+public:
+    DrinkFactory()
+    {
+        hot_factories["coffee"] = std::make_unique<CoffeeFactory>();
+        hot_factories["tea"] = std::make_unique<TeaFactory>();
+    }
+
+    std::unique_ptr<HotDrink> make_drink(const std::string& name)
+    {
+        auto drink = hot_factories[name]->make();
+        drink->prepare(200);
+        return drink;
+    }
+
+};
+
+
 int main()
 {
+    auto d = make_drink("tea");
 
+    DrinkFactory df;
+
+    df.make_drink("coffee");
+
+    return 0;
 }

@@ -48,6 +48,7 @@ protected:
               text(text)
     {
     }
+
 };
 
 

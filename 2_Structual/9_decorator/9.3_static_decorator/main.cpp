@@ -57,7 +57,7 @@ struct Square : Shape
     }
 };
 
-
+/*
 struct  ColoredShape : Shape
 {
     Shape& shape;
@@ -73,6 +73,7 @@ struct  ColoredShape : Shape
         return  oss.str();
     }
 };
+*/
 
 
 struct TransparentShape : Shape
@@ -93,22 +94,62 @@ struct TransparentShape : Shape
     }
 };
 
+// 노트: typename이 아니라 class 이다
+template <typename T> struct ColoredShape2 : T
+{
+    static_assert(std::is_base_of<Shape, T>::value,
+                  "Template argument must be a Shape");
+
+    std::string color;
+
+    // need this (or not!)
+    ColoredShape2(){}
+
+    template <typename...Args>
+    ColoredShape2(const std::string& color, Args ...args)
+            : T(std::forward<Args>(args)...), color{color}
+    // 여기서 베이스 클래스의 소멸자를 호출할 수는 없다.
+    // 왜냐면 소멸자를 알 수가 없기 때문이다.
+    {
+    }
+
+    std::string str() const override
+    {
+        std::ostringstream oss;
+        oss << T::str() << " has the color " << color;
+        return oss.str();
+    }
+};
+
+template <typename T> struct TransparentShape2 : T
+{
+    uint8_t transparency;
+
+    template<typename...Args>
+    TransparentShape2(const uint8_t transparency, Args ...args)
+            : T(std::forward<Args>(args)...), transparency{ transparency }
+    {
+    }
+s
+    std::string str() const override
+    {
+        std::ostringstream oss;
+        oss << T::str() << " has "
+            << static_cast<float>(transparency) / 255.f * 100.f
+            << "% transparency";
+        return oss.str();
+    }
+};
+
 
 int main()
 {
-    Circle circle{0.5f};
-    ColoredShape redCircle{circle, "red"};
-    std::cout << redCircle.str();
+    ColoredShape2<TransparentShape2<Circle>> circle{"red", 2 , 1};
 
-    Square square{3};
-    TransparentShape demiSquare{square, 85};
-    std::cout << demiSquare.str() << std::endl;
 
-    TransparentShape myCircle{
-            redCircle, 64
-    };
-
-    std::cout << myCircle.str() << std::endl;
+    std::cout << circle.str() << std::endl;
+    circle.resize(2);
+    std::cout << circle.str() << std::endl;
 
 }
 
